@@ -472,6 +472,25 @@ setupStick('rstick','rknob',2,3,'R');
 })();
 
 Android.log('GamePad overlay loaded');
+
+const BUTTON_SELECTORS = [
+  '.dpad-btn', '.gp-btn', '.shoulder-btn',
+  '.stick-wrap', '.center-sm', '#home-btn', '#settings-toggle'
+];
+function reportRects() {
+  const rects = [];
+  BUTTON_SELECTORS.forEach(sel => {
+    document.querySelectorAll(sel).forEach(el => {
+      if (el.style.display === 'none') return;
+      const r = el.getBoundingClientRect();
+      rects.push({ l:Math.floor(r.left-8), t:Math.floor(r.top-8), r:Math.ceil(r.right+8), b:Math.ceil(r.bottom+8) });
+    });
+  });
+  try { Android.reportButtonRects(JSON.stringify(rects)); } catch(e) {}
+}
+window.addEventListener('load', () => setTimeout(reportRects, 300));
+window.addEventListener('resize', () => setTimeout(reportRects, 300));
+document.getElementById('layout-select').addEventListener('change', () => setTimeout(reportRects, 100));
 </script>
 </body>
 </html>
