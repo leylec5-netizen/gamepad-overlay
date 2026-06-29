@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>GamePad</title>
+<style>
+*, *::before, *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+  touch-action: none;
+}
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+#overlay {
+  position: fixed; inset: 0;
+  background: transparent;
+  transition: opacity 0.2s;
+}
+
+/* ── 공통 버튼 ── */
+.gp-btn {
+  position: absolute;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.35);
+  background: rgba(20,20,50,0.58);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  color: rgba(255,255,255,0.92);
+  font-weight: 800; font-size: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.14);
+  transition: background 0.06s, transform 0.06s;
+  cursor: pointer;
+}
+.gp-btn.active {
+  background: rgba(255,255,255,0.28);
+  transform: scale(0.86);
+  box-shadow: 0 0 18px rgba(255,255,255,0.22);
+}
+
+/* ── 어깨 버튼 ── */
+#shoulder-left  { position:absolute; top:0; left:0; display:flex; flex-direction:column; gap:6px; padding:8px 10px; }
+#shoulder-right { position:absolute; top:0; right:0; display:flex; flex-direction:column; gap:6px; align-items:flex-end; padding:8px 10px; }
+.shoulder-btn {
+  display:flex; align-items:center; justify-content:center;
+  width:62px; height:32px; border-radius:9px;
+  border:2px solid rgba(255,255,255,0.28);
+  background:rgba(15,15,40,0.62);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  color:rgba(255,255,255,0.88); font-size:12px; font-weight:700;
+  box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  cursor:pointer; transition:background .06s, transform .06s;
+  letter-spacing:.5px;
+}
+.shoulder-btn.active { background:rgba(255,255,255,0.26); transform:scale(0.88); }
+
+/* ── D-PAD ── */
+#dpad { position:absolute; bottom:100px; left:20px; width:136px; height:136px; }
+.dpad-btn {
+  position:absolute; width:42px; height:42px;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(15,15,40,0.62);
+  border:2px solid rgba(255,255,255,0.28);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  color:rgba(255,255,255,0.88); font-size:15px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  cursor:pointer; transition:background .06s, transform .06s;
+}
+.dpad-btn.active { background:rgba(255,255,255,0.25); transform:scale(0.85); }
+#dp-up    { top:0;    left:50%; transform:translateX(-50%); border-radius:10px 10px 4px 4px; }
+#dp-down  { bottom:0; left:50%; transform:translateX(-50%); border-radius:4px 4px 10px 10px; }
+#dp-left  { left:0;  top:50%;  transform:translateY(-50%); border-radius:10px 4px 4px 10px; }
+#dp-right { right:0; top:50%;  transform:translateY(-50%); border-radius:4px 10px 10px 4px; }
+#dp-up.active    { transform:translateX(-50%) scale(.85); }
+#dp-down.active  { transform:translateX(-50%) scale(.85); }
+#dp-left.active  { transform:translateY(-50%) scale(.85); }
+#dp-right.active { transform:translateY(-50%) scale(.85); }
+#dp-center {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:32px; height:32px; border-radius:50%;
+  background:rgba(255,255,255,0.05);
+  border:1.5px solid rgba(255,255,255,0.1);
+  pointer-events:none;
+}
+
+/* ── 아날로그 스틱 ── */
+.stick-wrap {
+  position:absolute;
+  width:100px; height:100px; border-radius:50%;
+  background:rgba(8,8,28,0.52);
+  border:2.5px solid rgba(255,255,255,0.18);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  box-shadow:0 2px 18px rgba(0,0,0,0.45), inset 0 0 22px rgba(0,0,0,0.3);
+}
+.stick-knob {
+  position:absolute; width:44px; height:44px; border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.65) 0%,rgba(200,200,255,.38) 45%,rgba(100,100,180,.22) 100%);
+  border:2px solid rgba(255,255,255,.42);
+  box-shadow:0 3px 10px rgba(0,0,0,.48);
+  top:50%; left:50%; transform:translate(-50%,-50%);
+  pointer-events:none; will-change:transform;
+}
+#lstick { bottom:16px; left:20px; }
+#rstick { bottom:16px; right:20px; }
+
+/* ── ABXY ── */
+#face-pad { position:absolute; bottom:100px; right:20px; width:136px; height:136px; }
+#btn-a, #btn-b, #btn-x, #btn-y { position:absolute; width:44px; height:44px; }
+#btn-y { top:0;    left:50%; transform:translateX(-50%); background:rgba(200,160,0,.62);  border-color:rgba(255,220,60,.5); }
+#btn-a { bottom:0; left:50%; transform:translateX(-50%); background:rgba(30,140,50,.62);  border-color:rgba(80,220,100,.5); }
+#btn-b { right:0;  top:50%;  transform:translateY(-50%); background:rgba(180,30,30,.62);  border-color:rgba(255,80,80,.5); }
+#btn-x { left:0;   top:50%;  transform:translateY(-50%); background:rgba(20,90,195,.62);  border-color:rgba(80,160,255,.5); }
+#btn-y.active { transform:translateX(-50%) scale(.85); }
+#btn-a.active { transform:translateX(-50%) scale(.85); }
+#btn-b.active { transform:translateY(-50%) scale(.85); }
+#btn-x.active { transform:translateY(-50%) scale(.85); }
+
+/* ── 중앙 버튼 ── */
+#center-zone {
+  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+  display:flex; align-items:center; gap:12px;
+}
+.center-sm {
+  width:42px; height:22px; border-radius:11px;
+  border:1.5px solid rgba(255,255,255,.24);
+  background:rgba(15,15,40,.65);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  color:rgba(255,255,255,.72); font-size:9px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  letter-spacing:.5px; cursor:pointer;
+  box-shadow:0 1px 6px rgba(0,0,0,.3);
+  transition:background .06s, transform .06s;
+}
+.center-sm.active { background:rgba(255,255,255,.22); transform:scale(.88); }
+#home-btn {
+  width:36px; height:36px; border-radius:50%;
+  border:2px solid rgba(255,255,255,.28);
+  background:rgba(15,15,45,.72);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  color:rgba(255,255,255,.82); font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; box-shadow:0 2px 10px rgba(0,0,0,.42);
+  transition:background .06s, transform .06s;
+}
+#home-btn.active { background:rgba(255,255,255,.25); transform:scale(.86); }
+
+/* ── 설정 패널 ── */
+#settings-toggle {
+  position:fixed; top:10px; right:10px;
+  width:34px; height:34px; border-radius:50%;
+  background:rgba(15,15,45,.75);
+  border:1.5px solid rgba(255,255,255,.2);
+  backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+  color:rgba(255,255,255,.72); font-size:16px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; z-index:100;
+  box-shadow:0 2px 10px rgba(0,0,0,.4);
+}
+#settings-panel {
+  position:fixed; top:50px; right:10px;
+  background:rgba(8,8,28,.92);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border:1.5px solid rgba(255,255,255,.14);
+  border-radius:16px; padding:16px 18px;
+  display:none; flex-direction:column; gap:14px;
+  z-index:99; min-width:190px;
+  box-shadow:0 8px 32px rgba(0,0,0,.55);
+}
+#settings-panel.open { display:flex; }
+.setting-row {
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  color:rgba(255,255,255,.75); font-size:12px; font-weight:500;
+}
+.setting-row input[type=range] { width:95px; accent-color:rgba(140,140,255,1); height:3px; }
+.setting-row select {
+  background:rgba(25,25,55,.9); border:1px solid rgba(255,255,255,.2);
+  border-radius:6px; color:white; font-size:11px; padding:3px 5px;
+}
+#lock-btn {
+  background:rgba(255,70,70,.22); border:1px solid rgba(255,80,80,.38);
+  border-radius:8px; padding:6px 0; color:rgba(255,160,160,.9);
+  font-size:11px; cursor:pointer; font-weight:700;
+  letter-spacing:.4px; text-align:center;
+}
+#stop-btn {
+  background:rgba(80,80,80,.3); border:1px solid rgba(180,180,180,.25);
+  border-radius:8px; padding:6px 0; color:rgba(200,200,200,.8);
+  font-size:11px; cursor:pointer; font-weight:600;
+  letter-spacing:.3px; text-align:center;
+}
+#settings-backdrop { display:none; position:fixed; inset:0; z-index:98; }
+#settings-backdrop.open { display:block; }
+
+/* ── 토스트 ── */
+#toast {
+  position:fixed; top:10px; left:10px;
+  background:rgba(8,8,28,.78);
+  backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:10px; color:rgba(255,255,255,.82);
+  font-size:11px; padding:4px 12px;
+  pointer-events:none; opacity:0; transition:opacity .2s; z-index:97;
+}
+#toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div id="settings-toggle">⚙</div>
+<div id="settings-backdrop"></div>
+<div id="settings-panel">
+  <div class="setting-row">
+    <span>투명도</span>
+    <input type="range" id="opacity-slider" min="15" max="100" value="75">
+  </div>
+  <div class="setting-row">
+    <span>크기</span>
+    <input type="range" id="size-slider" min="65" max="135" value="100">
+  </div>
+  <div class="setting-row">
+    <span>레이아웃</span>
+    <select id="layout-select">
+      <option value="full">풀 컨트롤</option>
+      <option value="dpad">D-PAD만</option>
+      <option value="stick">스틱만</option>
+    </select>
+  </div>
+  <div id="lock-btn">🔒 게임 모드 (설정 잠금)</div>
+  <div id="stop-btn">⏹ 오버레이 종료</div>
+</div>
+
+<div id="toast"></div>
+
+<div id="overlay">
+  <div id="shoulder-left">
+    <div class="shoulder-btn" id="btn-l1">L1</div>
+    <div class="shoulder-btn" id="btn-l2">L2</div>
+  </div>
+  <div id="shoulder-right">
+    <div class="shoulder-btn" id="btn-r1">R1</div>
+    <div class="shoulder-btn" id="btn-r2">R2</div>
+  </div>
+
+  <div id="dpad">
+    <div class="dpad-btn" id="dp-up">▲</div>
+    <div class="dpad-btn" id="dp-down">▼</div>
+    <div class="dpad-btn" id="dp-left">◀</div>
+    <div class="dpad-btn" id="dp-right">▶</div>
+    <div id="dp-center"></div>
+  </div>
+
+  <div class="stick-wrap" id="lstick"><div class="stick-knob" id="lknob"></div></div>
+  <div class="stick-wrap" id="rstick"><div class="stick-knob" id="rknob"></div></div>
+
+  <div id="face-pad">
+    <div class="gp-btn" id="btn-y">Y</div>
+    <div class="gp-btn" id="btn-a">A</div>
+    <div class="gp-btn" id="btn-b">B</div>
+    <div class="gp-btn" id="btn-x">X</div>
+  </div>
+
+  <div id="center-zone">
+    <div class="center-sm" id="btn-select">◀◀</div>
+    <div id="home-btn">⊙</div>
+    <div class="center-sm" id="btn-start">▶▶</div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════
+//  Android 브리지 (없으면 폴백)
+// ════════════════════════════════
+const Android = window.AndroidBridge || {
+  haptic: (t) => { if (navigator.vibrate) navigator.vibrate(t==='light'?8:t==='medium'?20:40); },
+  stopOverlay: () => {},
+  log: (m) => console.log(m),
+};
+
+// ════════════════════════════════
+//  설정 UI
+// ════════════════════════════════
+let locked = false;
+const settingsToggle = document.getElementById('settings-toggle');
+const settingsPanel  = document.getElementById('settings-panel');
+const settingsBg     = document.getElementById('settings-backdrop');
+const overlay        = document.getElementById('overlay');
+
+settingsToggle.addEventListener('pointerdown', e => { e.stopPropagation(); settingsPanel.classList.toggle('open'); settingsBg.classList.toggle('open', settingsPanel.classList.contains('open')); });
+settingsBg.addEventListener('pointerdown', () => { settingsPanel.classList.remove('open'); settingsBg.classList.remove('open'); });
+
+// 투명도
+const opacitySlider = document.getElementById('opacity-slider');
+opacitySlider.addEventListener('input', () => { overlay.style.opacity = opacitySlider.value / 100; });
+overlay.style.opacity = 0.75;
+
+// 크기
+const sizeSlider = document.getElementById('size-slider');
+sizeSlider.addEventListener('input', () => {
+  overlay.style.transform = `scale(${sizeSlider.value/100})`;
+  overlay.style.transformOrigin = 'bottom center';
+});
+
+// 레이아웃
+const layoutSelect = document.getElementById('layout-select');
+layoutSelect.addEventListener('change', () => {
+  const v = layoutSelect.value;
+  document.getElementById('dpad').style.display   = v === 'stick' ? 'none' : '';
+  document.getElementById('lstick').style.display = v === 'dpad'  ? 'none' : '';
+  document.getElementById('rstick').style.display = v === 'dpad'  ? 'none' : '';
+});
+
+// 게임 모드 잠금
+document.getElementById('lock-btn').addEventListener('pointerdown', () => {
+  locked = true;
+  settingsToggle.style.display = 'none';
+  settingsPanel.classList.remove('open');
+  settingsBg.classList.remove('open');
+  showToast('게임 모드 ON — 4구석 동시 탭으로 해제');
+});
+
+// 오버레이 종료
+document.getElementById('stop-btn').addEventListener('pointerdown', () => {
+  Android.stopOverlay();
+});
+
+// 4구석 동시 탭으로 잠금 해제
+let cornerSet = new Set();
+document.addEventListener('touchstart', e => {
+  if (!locked) return;
+  for (const t of e.touches) {
+    const {clientX:x, clientY:y} = t;
+    const W = window.innerWidth, H = window.innerHeight;
+    if (x<70&&y<70) cornerSet.add('TL');
+    if (x>W-70&&y<70) cornerSet.add('TR');
+    if (x<70&&y>H-70) cornerSet.add('BL');
+    if (x>W-70&&y>H-70) cornerSet.add('BR');
+  }
+  if (cornerSet.size >= 4) { locked=false; settingsToggle.style.display=''; showToast('게임 모드 해제'); cornerSet.clear(); }
+}, {passive:true});
+document.addEventListener('touchend', () => cornerSet.clear(), {passive:true});
+
+// ════════════════════════════════
+//  토스트
+// ════════════════════════════════
+const toastEl = document.getElementById('toast');
+let toastTimer;
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove('show'), 900);
+}
+
+// ════════════════════════════════
+//  햅틱
+// ════════════════════════════════
+function haptic(type='light') { try { Android.haptic(type); } catch(e) {} }
+
+// ════════════════════════════════
+//  가상 Gamepad 상태
+// ════════════════════════════════
+const gpState = { buttons: new Array(17).fill(0), axes: [0,0,0,0] };
+
+// ════════════════════════════════
+//  일반 버튼 등록
+// ════════════════════════════════
+const GP_MAP = {
+  'btn-a':0,'btn-b':1,'btn-x':2,'btn-y':3,
+  'btn-l1':4,'btn-r1':5,'btn-l2':6,'btn-r2':7,
+  'btn-select':8,'btn-start':9,'home-btn':16,
+  'dp-up':12,'dp-down':13,'dp-left':14,'dp-right':15,
+};
+const LABELS = {
+  'btn-a':'A','btn-b':'B','btn-x':'X','btn-y':'Y',
+  'btn-l1':'L1','btn-r1':'R1','btn-l2':'L2','btn-r2':'R2',
+  'btn-select':'SELECT','btn-start':'START','home-btn':'HOME',
+  'dp-up':'↑','dp-down':'↓','dp-left':'←','dp-right':'→',
+};
+
+function attachBtn(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const gpIdx = GP_MAP[id];
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('active');
+    haptic('light');
+    if (gpIdx !== undefined) gpState.buttons[gpIdx] = 1;
+    showToast(LABELS[id] || id);
+  });
+  const up = () => { el.classList.remove('active'); if (gpIdx !== undefined) gpState.buttons[gpIdx] = 0; };
+  el.addEventListener('pointerup', up);
+  el.addEventListener('pointercancel', up);
+}
+Object.keys(GP_MAP).forEach(attachBtn);
+
+// ════════════════════════════════
+//  아날로그 스틱
+// ════════════════════════════════
+function setupStick(wrapId, knobId, axisX, axisY, labelPrefix) {
+  const wrap = document.getElementById(wrapId);
+  const knob = document.getElementById(knobId);
+  const MAX  = 28;
+  let active=false, cx=0, cy=0, lastDir='';
+
+  function move(px, py) {
+    let dx=px-cx, dy=py-cy;
+    const d=Math.hypot(dx,dy);
+    if(d>MAX){dx=dx/d*MAX;dy=dy/d*MAX;}
+    knob.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+    gpState.axes[axisX]=+(dx/MAX).toFixed(3);
+    gpState.axes[axisY]=+(dy/MAX).toFixed(3);
+    const DEAD=9;
+    let dir='';
+    if(Math.abs(dy)>Math.abs(dx)){
+      if(dy<-DEAD) dir=labelPrefix+'↑';
+      else if(dy>DEAD) dir=labelPrefix+'↓';
+    } else {
+      if(dx<-DEAD) dir=labelPrefix+'←';
+      else if(dx>DEAD) dir=labelPrefix+'→';
+    }
+    if(dir&&dir!==lastDir){showToast(dir);haptic('light');}
+    lastDir=dir;
+  }
+  function reset(){
+    knob.style.transform='translate(-50%,-50%)';
+    gpState.axes[axisX]=0; gpState.axes[axisY]=0; lastDir='';
+  }
+  wrap.addEventListener('pointerdown', e=>{
+    e.preventDefault(); wrap.setPointerCapture(e.pointerId); active=true;
+    const r=wrap.getBoundingClientRect();
+    cx=r.left+r.width/2; cy=r.top+r.height/2;
+    move(e.clientX,e.clientY);
+  });
+  wrap.addEventListener('pointermove', e=>{if(active)move(e.clientX,e.clientY);});
+  wrap.addEventListener('pointerup',     ()=>{active=false;reset();});
+  wrap.addEventListener('pointercancel', ()=>{active=false;reset();});
+}
+
+setupStick('lstick','lknob',0,1,'L');
+setupStick('rstick','rknob',2,3,'R');
+
+// ════════════════════════════════
+//  Gamepad API 패치 (Chromium WebView)
+// ════════════════════════════════
+(function(){
+  const fake={
+    id:'Virtual GamePad Overlay',index:0,connected:true,
+    mapping:'standard',
+    get timestamp(){return performance.now();},
+    get buttons(){return gpState.buttons.map(v=>({pressed:v>.5,touched:v>.1,value:v}));},
+    get axes(){return [...gpState.axes];},
+  };
+  try{
+    const orig=navigator.getGamepads.bind(navigator);
+    Object.defineProperty(navigator,'getGamepads',{value:function(){
+      const real=orig()||[]; const arr=Array.from({length:4},(_,i)=>real[i]||null);
+      arr[0]=fake; return arr;
+    }});
+    window.dispatchEvent(new GamepadEvent('gamepadconnected',{gamepad:fake}));
+  }catch(e){}
+})();
+
+Android.log('GamePad overlay loaded');
+</script>
+</body>
+</html>
