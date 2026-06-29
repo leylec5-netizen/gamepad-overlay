@@ -3,7 +3,7 @@ name: Build APK
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch:  # 수동 실행 버튼
+  workflow_dispatch:
 
 jobs:
   build:
@@ -19,21 +19,23 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      - name: Gradle Wrapper 직접 설치
+        run: |
+          gradle wrapper --gradle-version 8.2
+          chmod +x gradlew
+
       - name: Gradle 캐시
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-${{ hashFiles('**/*.gradle*') }}
 
-      - name: gradlew 실행 권한 부여
-        run: chmod +x gradlew
-
-      - name: APK 빌드 (debug)
+      - name: APK 빌드
         run: ./gradlew assembleDebug --no-daemon
 
-      - name: APK 업로드 (다운로드용 아티팩트)
+      - name: APK 업로드
         uses: actions/upload-artifact@v4
         with:
           name: GamePadOverlay-APK
