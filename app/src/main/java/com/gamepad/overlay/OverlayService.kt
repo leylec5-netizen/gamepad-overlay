@@ -22,7 +22,7 @@ class OverlayService : Service() {
         const val NOTIF_ID   = 1
     }
 
-    private lateinit var windowManager: WindowManager
+    private lateinit var wm: WindowManager
     private var gamepadView: GamepadView? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -30,7 +30,7 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
         isRunning = true
-        windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+        wm = getSystemService(WINDOW_SERVICE) as WindowManager
         createNotificationChannel()
         startForeground(NOTIF_ID, buildNotification())
         showOverlay()
@@ -39,7 +39,7 @@ class OverlayService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         isRunning = false
-        gamepadView?.let { windowManager.removeView(it) }
+        gamepadView?.let { wm.removeView(it) }
         gamepadView = null
     }
 
@@ -52,54 +52,43 @@ class OverlayService : Service() {
             WindowManager.LayoutParams.MATCH_PARENT,
             WindowManager.LayoutParams.MATCH_PARENT,
             layoutType,
-            // FLAG_NOT_FOCUSABLE | FLAG_NOT_TOUCH_MODAL:
-            // GamepadView.onTouchEvent이 false 반환하면 터치가 아래 앱으로 통과됨
+            // ★ 핵심: 이 두 플래그 조합이어야 빈 영역 터치가 아래로 통과됨
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
             WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED or
+            WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
         )
         params.gravity = Gravity.TOP or Gravity.START
-        // 가로 고정
         params.screenOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         val view = GamepadView(this)
-
-        // 버튼 이벤트 → 필요 시 여기서 Gamepad API나 키 이벤트로 확장 가능
         view.onButtonDown = { id -> android.util.Log.d("GamePad", "DOWN: $id") }
         view.onButtonUp   = { id -> android.util.Log.d("GamePad", "UP:   $id") }
 
-        windowManager.addView(view, params)
+        wm.addView(view, params)
         gamepadView = view
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val ch = NotificationChannel(
-                CHANNEL_ID, "게임패드 오버레이",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager)
-                .createNotificationChannel(ch)
+            val ch = NotificationChannel(CHANNEL_ID, "게임패드 오버레이", NotificationManager.IMPORTANCE_LOW)
+            (getSystemService(NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(ch)
         }
     }
 
     private fun buildNotification(): Notification {
-        val stopIntent = Intent(this, OverlayService::class.java).apply { action = "STOP" }
         val stopPending = PendingIntent.getService(
-            this, 0, stopIntent,
+            this, 0,
+            Intent(this, OverlayService::class.java).apply { action = "STOP" },
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
-        )
-        val openPending = PendingIntent.getActivity(
-            this, 0, Intent(this, MainActivity::class.java),
-            PendingIntent.FLAG_IMMUTABLE
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("🎮 게임패드 오버레이 실행 중")
             .setContentText("에뮬레이터 위에 게임패드가 표시됩니다")
             .setSmallIcon(android.R.drawable.ic_media_play)
-            .setContentIntent(openPending)
+            .setContentIntent(PendingIntent.getActivity(this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE))
             .addAction(android.R.drawable.ic_delete, "중지", stopPending)
             .setOngoing(true)
             .build()
