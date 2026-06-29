@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="32dp"
+    android:background="#0D0D1A">
+
+    <!-- 아이콘 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="🎮"
+        android:textSize="72sp"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- 앱 이름 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="GamePad Overlay"
+        android:textColor="#FFFFFF"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.03"
+        android:layout_marginBottom="6dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="에뮬레이터 게임 위에 가상 게임패드 오버레이"
+        android:textColor="#8888BB"
+        android:textSize="13sp"
+        android:layout_marginBottom="40dp"/>
+
+    <!-- 상태 표시 -->
+    <TextView
+        android:id="@+id/tv_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="준비 중..."
+        android:textColor="#AAAACC"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:background="#1A1A2E"
+        android:padding="14dp"
+        android:layout_marginBottom="28dp"
+        android:backgroundTint="#1A1A2E"/>
+
+    <!-- 권한 설정 버튼 -->
+    <Button
+        android:id="@+id/btn_permission"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="1단계: 오버레이 권한 허용"
+        android:textSize="14sp"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#3D3D6B"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- 시작 버튼 -->
+    <Button
+        android:id="@+id/btn_start"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="🎮  게임패드 오버레이 시작"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#4C6EF5"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- 중지 버튼 -->
+    <Button
+        android:id="@+id/btn_stop"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:text="⏹  오버레이 중지"
+        android:textSize="14sp"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#C0392B"
+        android:layout_marginBottom="32dp"/>
+
+    <!-- 사용법 안내 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#111128"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="사용 방법"
+            android:textColor="#7777AA"
+            android:textSize="11sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.1"
+            android:layout_marginBottom="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="① 오버레이 권한 허용\n② 게임패드 오버레이 시작\n③ 에뮬레이터 앱 실행\n④ 화면 위 게임패드로 플레이!\n\n⚙️ 버튼으로 투명도·크기 조절\n4구석 동시 탭으로 설정 복원"
+            android:textColor="#6666AA"
+            android:textSize="13sp"
+            android:lineSpacingMultiplier="1.5"/>
+    </LinearLayout>
+
+</LinearLayout>
