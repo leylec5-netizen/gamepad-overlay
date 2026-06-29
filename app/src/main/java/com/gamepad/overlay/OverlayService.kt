@@ -67,18 +67,17 @@ class OverlayService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
 
         val params = WindowManager.LayoutParams(
-            WindowManager.LayoutParams.MATCH_PARENT,
-            WindowManager.LayoutParams.MATCH_PARENT,
-            layoutType,
-            // FLAG_NOT_FOCUSABLE: 게임패드 터치가 아래 앱으로 통과되지 않도록
-            // FLAG_NOT_TOUCH_MODAL: 오버레이 밖 터치는 에뮬레이터로 전달
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                    WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-            PixelFormat.TRANSLUCENT
-        )
-        params.gravity = Gravity.TOP or Gravity.START
+    WindowManager.LayoutParams.MATCH_PARENT,
+    WindowManager.LayoutParams.MATCH_PARENT,
+    layoutType,
+    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+            WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL or
+            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+    PixelFormat.TRANSLUCENT
+)
+params.gravity = Gravity.TOP or Gravity.START
+params.screenOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
         // WebView 설정
         val wv = WebView(this).apply {
