@@ -1,3 +1,4 @@
+cat > /home/claude/gamepad-overlay/app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -28,7 +29,8 @@
         <service
             android:name=".OverlayService"
             android:exported="false"
-            android:foregroundServiceType="specialUse">
+            android:foregroundServiceType="specialUse"
+            android:configChanges="orientation|screenSize|screenLayout">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="game_overlay"/>
@@ -36,3 +38,5 @@
 
     </application>
 </manifest>
+EOF
+echo "Manifest 완료"
