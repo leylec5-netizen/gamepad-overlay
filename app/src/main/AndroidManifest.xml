@@ -1,4 +1,3 @@
-cat > /home/claude/gamepad-overlay/app/src/main/AndroidManifest.xml << 'EOF'
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -19,7 +18,8 @@ cat > /home/claude/gamepad-overlay/app/src/main/AndroidManifest.xml << 'EOF'
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -29,8 +29,7 @@ cat > /home/claude/gamepad-overlay/app/src/main/AndroidManifest.xml << 'EOF'
         <service
             android:name=".OverlayService"
             android:exported="false"
-            android:foregroundServiceType="specialUse"
-            android:configChanges="orientation|screenSize|screenLayout">
+            android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="game_overlay"/>
@@ -38,5 +37,3 @@ cat > /home/claude/gamepad-overlay/app/src/main/AndroidManifest.xml << 'EOF'
 
     </application>
 </manifest>
-EOF
-echo "Manifest 완료"
