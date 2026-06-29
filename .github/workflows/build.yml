@@ -19,9 +19,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Gradle Wrapper 직접 설치
+      - name: Gradle Wrapper jar 다운로드
         run: |
-          gradle wrapper --gradle-version 8.2
+          curl -L https://github.com/gradle/gradle/raw/v8.2.0/gradle/wrapper/gradle-wrapper.jar \
+            -o gradle/wrapper/gradle-wrapper.jar
           chmod +x gradlew
 
       - name: Gradle 캐시
